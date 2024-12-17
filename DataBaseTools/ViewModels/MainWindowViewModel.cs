@@ -3,6 +3,7 @@ using Prism.Commands;
 using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -28,6 +29,20 @@ namespace DataBaseTools.ViewModels
         {
             get { return backUpFileName; }
             set { backUpFileName = value; RaisePropertyChanged(); }
+        }
+
+        private ObservableCollection<string> tables = new ObservableCollection<string>();
+        public ObservableCollection<string> Tables
+        {
+            get { return tables; }
+            set { tables = value; RaisePropertyChanged(); }
+        }
+
+        private string currentSelectTable;
+        public string CurrentSelectTable
+        {
+            get { return currentSelectTable; }
+            set { currentSelectTable = value; RaisePropertyChanged(); }
         }
 
         /// <summary>
@@ -98,7 +113,7 @@ namespace DataBaseTools.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        // 处理异常
+
                     }
 
                     if(File.Exists(@$"D:\{BackUpFileName}.bak"))
@@ -112,6 +127,36 @@ namespace DataBaseTools.ViewModels
             });
         }
 
-
+        /// <summary>
+        /// Pitch On Which DataBase 
+        /// </summary>
+        public ICommand PitchOnCommand
+        {
+            get => new DelegateCommand(() =>
+            {
+                using (var context = new ToolsDataContext())
+                {
+                    var connection = context.Database.GetDbConnection();
+                    try
+                    {
+                        Tables = new ObservableCollection<string>();
+                        var command = connection.CreateCommand();
+                        command.CommandText = "SELECT name FROM sys.tables;";
+                        connection.Open();
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                Tables.Add(reader.GetString(0));
+                            }
+                        }
+                        connection.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                }
+            });
+        }
     }
 }
