@@ -105,8 +105,14 @@
                         Margin="5"
                         ItemsSource="{Binding Tables}"
                         SelectedItem="{Binding CurrentSelectTable}" />
-                    <Button Margin="5" Content="删除3/4" />
-                    <Button Margin="5" Content="删除1/2" />
+                    <Button
+                        Margin="5"
+                        Command="{Binding DeleteLeft1000Command}"
+                        Content="删剩1000条" />
+                    <Button
+                        Margin="5"
+                        Command="{Binding DeleteLeft110Command}"
+                        Content="删剩1/10" />
 
                 </WrapPanel>
 

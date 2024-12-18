@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace DataBaseTools.ViewModels
@@ -156,6 +157,54 @@ namespace DataBaseTools.ViewModels
                     {
                     }
                 }
+            });
+        }
+
+        /// <summary>
+        /// Delete Data Left 1000
+        /// </summary>
+        public ICommand DeleteLeft1000Command
+        {
+            get => new DelegateCommand(() =>
+            {
+                using (var context = new ToolsDataContext())
+                {
+                    var connection = context.Database.GetDbConnection();
+                    try
+                    {
+                        connection.Open();
+                        using (var command = connection.CreateCommand())
+                        {
+                            command.CommandText = @" DELETE FROM YourTable WHERE ID < (
+                                     SELECT MIN(ID) FROM
+                                (SELECT TOP 1000 ID FROM YourTable ORDER BY ID DESC)";
+                            command.ExecuteNonQuery();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+
+                    if (File.Exists(@$"D:\{BackUpFileName}.bak"))
+                    {
+                        // Todo A pop-up indicates that the operation succeeded
+
+                    }
+                    // Todo Failed
+
+                }
+            });
+        }
+
+        /// <summary>
+        /// Delete Data Left 1/10
+        /// </summary>
+        public ICommand DeleteLeft110Command
+        {
+            get => new DelegateCommand(() =>
+            {
+
             });
         }
     }
