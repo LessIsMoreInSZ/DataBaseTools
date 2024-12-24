@@ -1,4 +1,6 @@
 ﻿using DataBaseTools.ViewModels;
+using DataBaseTools.ViewModels.Dialogs;
+using DataBaseTools.Views.Dialogs;
 using Prism.Ioc;
 using Prism.Unity;
 using System.Configuration;
@@ -20,6 +22,8 @@ namespace DataBaseTools
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
             containerRegistry.RegisterForNavigation<MainWindow, MainWindowViewModel>();
+            containerRegistry.RegisterDialog<MessageView, MessageViewModel>();
+
         }
     }
 

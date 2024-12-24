@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Prism.Commands;
 using Prism.Mvvm;
+using Prism.Services.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -17,6 +18,12 @@ namespace DataBaseTools.ViewModels
 {
     public class MainWindowViewModel : BindableBase
     {
+        private readonly IDialogService _dialogService;
+
+        public MainWindowViewModel(IDialogService dialogService)
+        {
+            _dialogService = dialogService;
+        }
 
         private string databaseName = "VacuumSystem2";
         public string DatabaseName
@@ -117,12 +124,6 @@ namespace DataBaseTools.ViewModels
 
                     }
 
-                    if(File.Exists(@$"D:\{BackUpFileName}.bak"))
-                    {
-                        // Todo A pop-up indicates that the operation succeeded
-                        
-                    }
-                    // Todo Failed
 
                 }
             });
@@ -169,15 +170,23 @@ namespace DataBaseTools.ViewModels
             {
                 using (var context = new ToolsDataContext())
                 {
+                    if (File.Exists(@$"D:\{BackUpFileName}.bak"))
+                    {
+                        DialogParameters keyValuePairs = new DialogParameters();
+                        keyValuePairs.Add("Content", "请先备份数据库文件");
+                        _dialogService.ShowDialog("MessageView", keyValuePairs, null);
+                        // Todo A pop-up indicates that the operation succeeded
+
+                    }
                     var connection = context.Database.GetDbConnection();
                     try
                     {
                         connection.Open();
                         using (var command = connection.CreateCommand())
                         {
-                            command.CommandText = @" DELETE FROM YourTable WHERE ID < (
+                            command.CommandText = @$" DELETE FROM {CurrentSelectTable} WHERE ID < (
                                      SELECT MIN(ID) FROM
-                                (SELECT TOP 1000 ID FROM YourTable ORDER BY ID DESC)";
+                                (SELECT TOP 1000 ID FROM {CurrentSelectTable} ORDER BY ID DESC)";
                             command.ExecuteNonQuery();
                         }
                     }
@@ -186,11 +195,7 @@ namespace DataBaseTools.ViewModels
 
                     }
 
-                    if (File.Exists(@$"D:\{BackUpFileName}.bak"))
-                    {
-                        // Todo A pop-up indicates that the operation succeeded
-
-                    }
+                    
                     // Todo Failed
 
                 }

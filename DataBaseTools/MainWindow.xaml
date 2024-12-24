@@ -109,18 +109,19 @@
                         Margin="5"
                         Command="{Binding DeleteLeft1000Command}"
                         Content="删剩1000条" />
-                    <Button
+                    <!--<Button
                         Margin="5"
                         Command="{Binding DeleteLeft110Command}"
-                        Content="删剩1/10" />
+                        Content="删剩1/10" />-->
 
                 </WrapPanel>
 
             </Grid>
         </GroupBox>
 
+
         <!--  数据拆分  -->
-        <GroupBox
+        <!--<GroupBox
             Grid.Row="1"
             Grid.Column="1"
             Margin="5"
@@ -136,6 +137,19 @@
                 <Button Margin="5" Content="拆分3/4" />
                 <Button Margin="5" Content="拆分1/2" />
             </WrapPanel>
+        </GroupBox>-->
+
+        <GroupBox
+            Grid.Row="1"
+            Grid.Column="1"
+            Margin="5"
+            Header="操作流程">
+            <StackPanel>
+                <TextBlock Text="第一步：填写数据库名称（正常我已经给你填好了，不需要修改）" />
+                <TextBlock Text="第二步：整库备份文件（备份整个数据库，可能有点慢，不要急）" />
+                <TextBlock Text="第三步：选中chart表，点击删剩1000条" />
+            </StackPanel>
+
         </GroupBox>
 
 
