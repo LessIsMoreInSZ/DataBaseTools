@@ -170,7 +170,7 @@ namespace DataBaseTools.ViewModels
             {
                 using (var context = new ToolsDataContext())
                 {
-                    if (File.Exists(@$"D:\{BackUpFileName}.bak"))
+                    if (!File.Exists(@$"D:\{BackUpFileName}.bak"))
                     {
                         DialogParameters keyValuePairs = new DialogParameters();
                         keyValuePairs.Add("Content", "请先备份数据库文件");

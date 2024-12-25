@@ -234,6 +234,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
