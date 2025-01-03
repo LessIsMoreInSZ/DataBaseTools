@@ -1,4 +1,5 @@
-﻿using Prism.Commands;
+﻿using NLog;
+using Prism.Commands;
 using Prism.Mvvm;
 using Prism.Services.Dialogs;
 using System;
@@ -24,7 +25,11 @@ namespace DataBaseTools.net48.ViewModels
 
     public class MainWindowViewModel : BindableBase
     {
-        string connectionString = @"Data Source=JYJ;Initial Catalog=VacuumSystem2;User ID=sa;Password=123456;";
+        private Logger logger = LogManager.GetCurrentClassLogger();
+
+        //string connectionString = @"Data Source=JYJ;Initial Catalog=VacuumSystem2;User ID=sa;Password=123456;";
+        string connectionString = @"Data Source=BK_IPC;Initial Catalog=VacuumSystem;User ID=sa;Password=edgyvac";
+
         private readonly IDialogService _dialogService;
 
         public MainWindowViewModel(IDialogService dialogService)
@@ -32,7 +37,7 @@ namespace DataBaseTools.net48.ViewModels
             _dialogService = dialogService;
         }
 
-        private string databaseName = "VacuumSystem2";
+        private string databaseName = "VacuumSystem";
         public string DatabaseName
         {
             get { return databaseName; }
@@ -102,6 +107,13 @@ namespace DataBaseTools.net48.ViewModels
                         f.name;";
 
 
+        // SqlCommand.CommandTimeout
+        // 获取或设置在终止执行命令的尝试并生成错误之前的等待时间。
+        // 等待命令执行的时间（以秒为单位）。默认为 30 秒。
+        // SqlConnection.ConnectionTimeout
+        // 获取在尝试建立连接时终止尝试并生成错误之前所等待的时间。
+        // 等待连接打开的时间（以秒为单位）。默认值为 15 秒。
+
         /// <summary>
         /// Whole DataBase backup
         /// </summary>
@@ -111,32 +123,44 @@ namespace DataBaseTools.net48.ViewModels
             {
                 if (string.IsNullOrEmpty(BackUpFileName))
                     return;
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                Task.Run(() =>
                 {
-                    try
+                    using (SqlConnection connection = new SqlConnection(connectionString))
                     {
-                        connection.Open();
-                        string sql = $@"
+                        //connection.ConnectionTimeout = 20;
+                        try
+                        {
+                            connection.Open();
+                            string sql = $@"
                             BACKUP DATABASE [{DatabaseName}] 
                             TO DISK = 'D:\{BackUpFileName}.bak'
                             WITH FORMAT, MEDIANAME = '{BackUpFileName}', NAME = '{BackUpFileName}'";
-                        using (SqlCommand command = new SqlCommand(sql, connection))
+                            using (SqlCommand command = new SqlCommand(sql, connection))
+                            {
+                                command.CommandTimeout = 120;
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        catch (Exception ex)
                         {
-                            command.ExecuteReader();
+                            Application.Current.Dispatcher.Invoke(() =>
+                            {
+                                logger.Error(ex.ToString());
+                                DialogParameters keyValuePairs = new DialogParameters();
+                                keyValuePairs.Add("Content", "操作失败");
+                                _dialogService.ShowDialog("MessageView", keyValuePairs, null);
+                                return;
+                            });
                         }
                     }
-                    catch (Exception ex)
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
-                        DialogParameters keyValuePairs = new DialogParameters();
-                        keyValuePairs.Add("Content", "操作失败");
-                        _dialogService.ShowDialog("MessageView", keyValuePairs, null);
-                        return;
-                    }
-                }
-
-                DialogParameters keyValuePairs1 = new DialogParameters();
-                keyValuePairs1.Add("Content", "操作成功");
-                _dialogService.ShowDialog("MessageView", keyValuePairs1, null);
+                        DialogParameters keyValuePairs1 = new DialogParameters();
+                        keyValuePairs1.Add("Content", "操作成功");
+                        _dialogService.ShowDialog("MessageView", keyValuePairs1, null);
+                    });
+                });
+              
 
 
             });
