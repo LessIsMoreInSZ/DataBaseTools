@@ -5,6 +5,7 @@ using Prism.Services.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Configuration;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
@@ -28,7 +29,8 @@ namespace DataBaseTools.net48.ViewModels
         private Logger logger = LogManager.GetCurrentClassLogger();
 
         //string connectionString = @"Data Source=JYJ;Initial Catalog=VacuumSystem2;User ID=sa;Password=123456;";
-        string connectionString = @"Data Source=BK_IPC;Initial Catalog=VacuumSystem;User ID=sa;Password=edgyvac";
+        //string connectionString = @"Data Source=BK_IPC;Initial Catalog=VacuumSystem;User ID=sa;Password=edgyvac";
+        string connectionString = GetConnectionString("sqlString");
 
         private readonly IDialogService _dialogService;
 
@@ -113,6 +115,29 @@ namespace DataBaseTools.net48.ViewModels
         // SqlConnection.ConnectionTimeout
         // 获取在尝试建立连接时终止尝试并生成错误之前所等待的时间。
         // 等待连接打开的时间（以秒为单位）。默认值为 15 秒。
+
+        public static string GetConnectionString(string connectionStringName)
+        {
+            // 获取连接字符串集合
+            ConnectionStringsSection section = (ConnectionStringsSection)ConfigurationManager.GetSection("connectionStrings");
+
+            if (section != null)
+            {
+                ConnectionStringSettings settings = section.ConnectionStrings[connectionStringName];
+                if (settings != null)
+                {
+                    return settings.ConnectionString;
+                }
+                else
+                {
+                    throw new ConfigurationErrorsException($"连接字符串 '{connectionStringName}' 未在 web.config 中找到。");
+                }
+            }
+            else
+            {
+                throw new ConfigurationErrorsException("无法加载 connectionStrings 配置节。");
+            }
+        }
 
         /// <summary>
         /// Whole DataBase backup
@@ -204,7 +229,9 @@ namespace DataBaseTools.net48.ViewModels
                 }
                 catch (Exception ex)
                 {
-
+                    DialogParameters keyValuePairs = new DialogParameters();
+                    keyValuePairs.Add("Content", "连接数据库失败，请联系厂商！");
+                    _dialogService.ShowDialog("MessageView", keyValuePairs, null);
                 }
             });
         }
@@ -265,6 +292,44 @@ namespace DataBaseTools.net48.ViewModels
             {
                 // Todo
             });
+        }
+    }
+
+    public class ConnectionStringHelper
+    {
+        /// <summary>
+        /// 获取指定名称的连接字符串（简化版）
+        /// </summary>
+        /// <param name="connectionStringName">连接字符串的名称</param>
+        /// <returns>连接字符串的值</returns>
+        public static string GetConnectionString(string connectionStringName)
+        {
+            ConnectionStringSettings settings = ConfigurationManager.ConnectionStrings[connectionStringName];
+            if (settings != null)
+            {
+                return settings.ConnectionString;
+            }
+            else
+            {
+                throw new ConfigurationErrorsException($"连接字符串 '{connectionStringName}' 未在 web.config 中找到。");
+            }
+        }
+
+        /// <summary>
+        /// 示例用法
+        /// </summary>
+        public static void ExampleUsage()
+        {
+            try
+            {
+                string sqlConnectionString = GetConnectionString("sqlString");
+                Console.WriteLine("sqlString 连接字符串内容:");
+                Console.WriteLine(sqlConnectionString);
+            }
+            catch (ConfigurationErrorsException ex)
+            {
+                Console.WriteLine("配置错误: " + ex.Message);
+            }
         }
     }
 }
