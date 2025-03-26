@@ -108,7 +108,12 @@
                     <Button
                         Margin="5"
                         Command="{Binding DeleteLeft1000Command}"
-                        Content="删剩1000条" />
+                        Content="先备份删剩1000条" />
+
+                    <Button
+                        Margin="5"
+                        Command="{Binding DeleteLeft5000Command}"
+                        Content="不备份删剩5000条" />
                     <!--<Button
                     Margin="5"
                     Command="{Binding DeleteLeft110Command}"

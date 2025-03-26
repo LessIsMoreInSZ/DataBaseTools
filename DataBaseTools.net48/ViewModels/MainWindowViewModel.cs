@@ -283,6 +283,48 @@ namespace DataBaseTools.net48.ViewModels
             });
         }
 
+
+        /// <summary>
+        /// Delete Data Left 5000
+        /// </summary>
+        public ICommand DeleteLeft5000Command
+        {
+            get => new DelegateCommand(() =>
+            {
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    try
+                    {
+
+                        connection.Open();
+                        string sql = $@" DELETE FROM {CurrentSelectTable} WHERE ID < (
+                                     SELECT MIN(ID) FROM
+                                (SELECT TOP 5000 ID FROM {CurrentSelectTable} ORDER BY ID DESC)";
+                        using (SqlCommand command = new SqlCommand(sql, connection))
+                        {
+                            command.ExecuteReader();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        DialogParameters keyValuePairs = new DialogParameters();
+                        keyValuePairs.Add("Content", "操作失败");
+                        _dialogService.ShowDialog("MessageView", keyValuePairs, null);
+                        logger.Error(ex.ToString());
+                        return;
+                    }
+                }
+
+                DialogParameters keyValuePairs1 = new DialogParameters();
+                keyValuePairs1.Add("Content", "操作成功");
+                _dialogService.ShowDialog("MessageView", keyValuePairs1, null);
+
+
+            });
+        }
+
+
         /// <summary>
         /// Delete Data Left 1/10
         /// </summary>
