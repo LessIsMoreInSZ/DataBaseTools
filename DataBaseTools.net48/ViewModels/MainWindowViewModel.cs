@@ -47,6 +47,14 @@ namespace DataBaseTools.net48.ViewModels
             set { databaseName = value; RaisePropertyChanged(); }
         }
 
+        private bool isOperate;
+        public bool IsOperate
+        {
+            get { return isOperate; }
+            set { isOperate = value; RaisePropertyChanged(); }
+        }
+        
+
         private string backUpFileName = "Test";
         public string BackUpFileName
         {
@@ -153,6 +161,7 @@ namespace DataBaseTools.net48.ViewModels
                 {
                     using (SqlConnection connection = new SqlConnection(connectionString))
                     {
+                        IsOperate = true;
                         //connection.ConnectionTimeout = 20;
                         try
                         {
@@ -171,6 +180,7 @@ namespace DataBaseTools.net48.ViewModels
                         {
                             Application.Current.Dispatcher.Invoke(() =>
                             {
+                                IsOperate = false;
                                 logger.Error(ex.ToString());
                                 DialogParameters keyValuePairs = new DialogParameters();
                                 keyValuePairs.Add("Content", "操作失败");
@@ -181,6 +191,7 @@ namespace DataBaseTools.net48.ViewModels
                     }
                     Application.Current.Dispatcher.Invoke(() =>
                     {
+                        IsOperate = false;
                         DialogParameters keyValuePairs1 = new DialogParameters();
                         keyValuePairs1.Add("Content", "操作成功");
                         _dialogService.ShowDialog("MessageView", keyValuePairs1, null);
@@ -245,6 +256,7 @@ namespace DataBaseTools.net48.ViewModels
             get => new DelegateCommand(() =>
             {
                 bool isSuscess = true;
+                IsOperate = true;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     try
@@ -279,6 +291,7 @@ namespace DataBaseTools.net48.ViewModels
                     catch (Exception ex)
                     {
                         isSuscess = false;
+                        IsOperate = false;
                         DialogParameters keyValuePairs = new DialogParameters();
                         keyValuePairs.Add("Content", "操作失败");
                         _dialogService.ShowDialog("MessageView", keyValuePairs, null);
@@ -288,6 +301,7 @@ namespace DataBaseTools.net48.ViewModels
 
                 if(isSuscess)
                 {
+                    IsOperate = false;
                     DialogParameters keyValuePairs1 = new DialogParameters();
                     keyValuePairs1.Add("Content", "操作成功");
                     _dialogService.ShowDialog("MessageView", keyValuePairs1, null);
@@ -304,11 +318,12 @@ namespace DataBaseTools.net48.ViewModels
             get => new DelegateCommand(() =>
             {
 
+                bool IsSuccess = true;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     try
                     {
-
+                        IsOperate = true;
                         connection.Open();
                         //string sql = $@" DELETE FROM {CurrentSelectTable} WHERE ID < (
                         //             SELECT MIN(ID) FROM
@@ -330,6 +345,8 @@ namespace DataBaseTools.net48.ViewModels
                     }
                     catch (Exception ex)
                     {
+                        IsOperate = false;
+                        IsSuccess = false;
                         DialogParameters keyValuePairs = new DialogParameters();
                         keyValuePairs.Add("Content", "操作失败");
                         _dialogService.ShowDialog("MessageView", keyValuePairs, null);
@@ -339,11 +356,13 @@ namespace DataBaseTools.net48.ViewModels
                     }
                 }
 
-                DialogParameters keyValuePairs1 = new DialogParameters();
-                keyValuePairs1.Add("Content", "操作成功");
-                _dialogService.ShowDialog("MessageView", keyValuePairs1, null);
-
-
+                IsOperate = false;
+                if(IsSuccess)
+                {
+                    DialogParameters keyValuePairs1 = new DialogParameters();
+                    keyValuePairs1.Add("Content", "操作成功");
+                    _dialogService.ShowDialog("MessageView", keyValuePairs1, null);
+                }
             });
         }
 
