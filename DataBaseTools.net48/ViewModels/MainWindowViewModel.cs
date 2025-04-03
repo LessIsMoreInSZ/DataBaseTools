@@ -9,6 +9,7 @@ using System.Configuration;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -185,7 +186,7 @@ namespace DataBaseTools.net48.ViewModels
                         _dialogService.ShowDialog("MessageView", keyValuePairs1, null);
                     });
                 });
-              
+
 
 
             });
@@ -243,7 +244,7 @@ namespace DataBaseTools.net48.ViewModels
         {
             get => new DelegateCommand(() =>
             {
-
+                bool isSuscess = true;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     try
@@ -258,9 +259,18 @@ namespace DataBaseTools.net48.ViewModels
                         }
 
                         connection.Open();
-                        string sql = $@" DELETE FROM {CurrentSelectTable} WHERE ID < (
-                                     SELECT MIN(ID) FROM
-                                (SELECT TOP 1000 ID FROM {CurrentSelectTable} ORDER BY ID DESC)";
+                        //string sql = $@" DELETE FROM {CurrentSelectTable} WHERE ID < (
+                        //             SELECT MIN(ID) FROM
+                        //        (SELECT TOP 1000 ID FROM {CurrentSelectTable} ORDER BY ID DESC))";
+
+                        string sql = $@"DELETE FROM {CurrentSelectTable}
+                                        WHERE ID < (
+                                        SELECT MIN(ID)
+                                FROM(
+                                    SELECT TOP 5000 ID
+                                    FROM {CurrentSelectTable}
+                                    ORDER BY ID DESC
+                                ) AS tmp);";
                         using (SqlCommand command = new SqlCommand(sql, connection))
                         {
                             command.ExecuteReader();
@@ -268,6 +278,7 @@ namespace DataBaseTools.net48.ViewModels
                     }
                     catch (Exception ex)
                     {
+                        isSuscess = false;
                         DialogParameters keyValuePairs = new DialogParameters();
                         keyValuePairs.Add("Content", "操作失败");
                         _dialogService.ShowDialog("MessageView", keyValuePairs, null);
@@ -275,11 +286,12 @@ namespace DataBaseTools.net48.ViewModels
                     }
                 }
 
-                DialogParameters keyValuePairs1 = new DialogParameters();
-                keyValuePairs1.Add("Content", "操作成功");
-                _dialogService.ShowDialog("MessageView", keyValuePairs1, null);
-
-
+                if(isSuscess)
+                {
+                    DialogParameters keyValuePairs1 = new DialogParameters();
+                    keyValuePairs1.Add("Content", "操作成功");
+                    _dialogService.ShowDialog("MessageView", keyValuePairs1, null);
+                }
             });
         }
 
@@ -298,9 +310,19 @@ namespace DataBaseTools.net48.ViewModels
                     {
 
                         connection.Open();
-                        string sql = $@" DELETE FROM {CurrentSelectTable} WHERE ID < (
-                                     SELECT MIN(ID) FROM
-                                (SELECT TOP 5000 ID FROM {CurrentSelectTable} ORDER BY ID DESC)";
+                        //string sql = $@" DELETE FROM {CurrentSelectTable} WHERE ID < (
+                        //             SELECT MIN(ID) FROM
+                        //        (SELECT TOP 5000 ID FROM {CurrentSelectTable} ORDER BY ID DESC))";
+
+                        string sql = $@"DELETE FROM {CurrentSelectTable}
+                                        WHERE ID < (
+                                        SELECT MIN(ID)
+                                FROM(
+                                    SELECT TOP 5000 ID
+                                    FROM {CurrentSelectTable}
+                                    ORDER BY ID DESC
+                                ) AS tmp);";
+                        logger.Debug(sql);
                         using (SqlCommand command = new SqlCommand(sql, connection))
                         {
                             command.ExecuteReader();
@@ -311,6 +333,7 @@ namespace DataBaseTools.net48.ViewModels
                         DialogParameters keyValuePairs = new DialogParameters();
                         keyValuePairs.Add("Content", "操作失败");
                         _dialogService.ShowDialog("MessageView", keyValuePairs, null);
+
                         logger.Error(ex.ToString());
                         return;
                     }
