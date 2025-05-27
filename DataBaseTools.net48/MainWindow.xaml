@@ -100,6 +100,11 @@
                 Margin="5"
                 Header="删除数据">
                 <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
                     <WrapPanel>
                         <TextBlock VerticalAlignment="Center" Text="选中表名" />
                         <ComboBox
@@ -123,6 +128,11 @@
                 Content="删剩1/10" />-->
 
                     </WrapPanel>
+
+                    <StackPanel Grid.Row="1">
+                        <Button Content="添加索引" Width="125" Command="{Binding AddIndexCommand}" Height="45" HorizontalAlignment="Left" Margin="15,2,0,0"/>
+
+                    </StackPanel>
 
                 </Grid>
             </GroupBox>
@@ -172,9 +182,9 @@
             </StackPanel>
 
         </Grid>
-        <Grid Background="White" Visibility="{Binding IsOperate, Converter={StaticResource Boolean2VisibilityConverter}}">
+        <!--<Grid Background="White" Visibility="{Binding IsOperate, Converter={StaticResource Boolean2VisibilityConverter}}">
             <hc:LoadingCircle />
-        </Grid>
+        </Grid>-->
     </Grid>
 
 </Window>

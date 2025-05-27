@@ -367,6 +367,8 @@ namespace DataBaseTools.net48.ViewModels
         }
 
 
+
+
         /// <summary>
         /// Delete Data Left 1/10
         /// </summary>
@@ -375,6 +377,39 @@ namespace DataBaseTools.net48.ViewModels
             get => new DelegateCommand(() =>
             {
                 // Todo
+            });
+        }
+
+        public ICommand AddIndexCommand
+        {
+            get => new DelegateCommand(() =>
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    try
+                    {
+                        connection.Open();
+
+                        string sql = $@"CREATE INDEX IX_chart_create_time ON chart (creat_time);";
+                        using (SqlCommand command = new SqlCommand(sql, connection))
+                        {
+                            command.ExecuteReader();
+                        }
+
+                        DialogParameters keyValuePairs = new DialogParameters();
+                        keyValuePairs.Add("Content", "操作成功");
+                        _dialogService.ShowDialog("MessageView", keyValuePairs, null);
+                    }
+                    catch (Exception ex)
+                    {
+                        DialogParameters keyValuePairs = new DialogParameters();
+                        keyValuePairs.Add("Content", "操作失败");
+                        _dialogService.ShowDialog("MessageView", keyValuePairs, null);
+
+                        logger.Error(ex.ToString());
+                        return;
+                    }
+                }
             });
         }
     }
