@@ -24,7 +24,9 @@ namespace DataBaseTools.net48
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
             containerRegistry.RegisterForNavigation<MainWindow, MainWindowViewModel>();
+            //containerRegistry.RegisterForNavigation<SqliteView, SqliteViewModel>();
             containerRegistry.RegisterDialog<MessageView, MessageViewModel>();
+
 
         }
     }

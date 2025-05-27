@@ -13,14 +13,14 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace DataBaseTools._48
+namespace DataBaseTools.net48.Views
 {
     /// <summary>
-    /// MainWindow.xaml 的交互逻辑
+    /// SqliteView.xaml 的交互逻辑
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class SqliteView : UserControl
     {
-        public MainWindow()
+        public SqliteView()
         {
             InitializeComponent();
         }
