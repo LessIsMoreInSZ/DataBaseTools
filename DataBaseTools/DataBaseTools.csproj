@@ -19,4 +19,10 @@
     <PackageReference Include="Prism.Wpf" Version="8.1.97" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="toolsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

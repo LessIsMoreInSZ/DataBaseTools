@@ -1,92 +1,176 @@
-﻿using Microsoft.Data.Sqlite;
+using Microsoft.Data.Sqlite;
+using System;
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace DataBaseTools
 {
     public partial class Form1 : Form
     {
-        string dbPath = @"Data Source=c:\Data\‪Application.db";
-
         public Form1()
         {
             InitializeComponent();
+            txtDbPath.Text = @"C:\Data\Application.db";
+            txtTableName.Text = "Products";
+            txtIdColumn.Text = "Id";
+            txtIndexColumn.Text = "CreateTime";
+            numKeepRows.Value = 5000;
+            lblTips.Text = "使用前请先关闭 AJY App 或其他占用 SQLite 文件的程序，再执行删除或 VACUUM。";
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnBrowseDb_Click(object sender, EventArgs e)
         {
+            using OpenFileDialog dialog = new OpenFileDialog();
+            dialog.Filter = "SQLite Database|*.db;*.sqlite;*.sqlite3|All Files|*.*";
+            dialog.Title = "选择 SQLite 数据库文件";
+
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                txtDbPath.Text = dialog.FileName;
+                lblTips.Text = "已选择数据库文件：" + dialog.FileName;
+            }
+        }
+
+        private void btnCreateIndex_Click(object sender, EventArgs e)
+        {
+            if (!TryGetValidatedInputs(out string dbPath, out string tableName, out string idColumn, out string indexColumn, out int keepRows))
+            {
+                return;
+            }
+
             try
             {
-                // 数据库文件路径
-                //string dbPath = @"Data Source=c:\Data\‪Application.db";
+                using SqliteConnection connection = CreateConnection(dbPath);
+                connection.Open();
 
-                // 创建 SqliteConnection 对象
-                using (SqliteConnection connection = new SqliteConnection(dbPath))
-                {
-                    // 打开连接
-                    connection.Open();
+                string indexName = $"IX_{tableName}_{indexColumn}";
+                using SqliteCommand command = connection.CreateCommand();
+                command.CommandText = $"CREATE INDEX IF NOT EXISTS {QuoteIdentifier(indexName)} ON {QuoteIdentifier(tableName)} ({QuoteIdentifier(indexColumn)});";
+                command.ExecuteNonQuery();
 
-                    // 创建 SqliteCommand 对象
-                    using (SqliteCommand command = connection.CreateCommand())
-                    {
-                        // SQL 语句：在 my_table 表的 my_column 列上创建索引
-                        string sql = "CREATE INDEX IF NOT EXISTS create_time ON Products(CreateTime);";
-
-                        command.CommandText = sql;
-                        command.ExecuteNonQuery();
-                    }
-
-                    // 关闭连接（using 块会自动关闭连接）
-                }
-
-                MessageBox.Show("执行成功!");
+                lblTips.Text = $"索引创建完成：{indexName}。当前保留策略仍是最新 {keepRows} 条，排序列为 {idColumn}。";
+                MessageBox.Show(this, $"执行成功，已检查或创建索引：{indexName}", "操作成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                MessageBox.Show("执行失败");
+                MessageBox.Show(this, "索引处理失败：" + ex.Message, "操作失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void btnDelete_Click(object sender, EventArgs e)
+        private void btnDeleteOldRows_Click(object sender, EventArgs e)
         {
-            // 显示确认对话框
+            if (!TryGetValidatedInputs(out string dbPath, out string tableName, out string idColumn, out _, out int keepRows))
+            {
+                return;
+            }
+
             DialogResult result = MessageBox.Show(
-                "确定要删除这些记录吗？",
+                this,
+                $"确定要删除 {tableName} 的旧记录，仅保留最新 {keepRows} 条吗？",
                 "删除确认",
                 MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question,
-                MessageBoxDefaultButton.Button2); // 默认选中"No"
-            if (result == DialogResult.Yes)
+                MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2);
+
+            if (result != DialogResult.Yes)
             {
-                using (SqliteConnection connection = new SqliteConnection(dbPath))
-                {
-                    try
-                    {
-
-                        string sql = $@"DELETE FROM Products
-                                        WHERE ID < (
-                                        SELECT MIN(ID)
-                                FROM(
-                                    SELECT TOP 5000 ID
-                                    FROM Products
-                                    ORDER BY ID DESC
-                                ) AS tmp);
-                                VACUUM;";
-                        using (SqliteCommand command = new SqliteCommand(sql, connection))
-                        {
-                            command.ExecuteReader();
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"删除失败QAQ: {ex.Message}");
-                        return;
-                    }
-
-                    MessageBox.Show("删除成功！");
-                }
+                return;
             }
-               
 
+            try
+            {
+                using SqliteConnection connection = CreateConnection(dbPath);
+                connection.Open();
 
+                int affectedRows;
+                using (SqliteCommand deleteCommand = connection.CreateCommand())
+                {
+                    deleteCommand.CommandText = $@"
+DELETE FROM {QuoteIdentifier(tableName)}
+WHERE {QuoteIdentifier(idColumn)} NOT IN (
+    SELECT {QuoteIdentifier(idColumn)}
+    FROM {QuoteIdentifier(tableName)}
+    ORDER BY {QuoteIdentifier(idColumn)} DESC
+    LIMIT $keepRows
+);";
+                    deleteCommand.Parameters.AddWithValue("$keepRows", keepRows);
+                    affectedRows = deleteCommand.ExecuteNonQuery();
+                }
+
+                using (SqliteCommand vacuumCommand = connection.CreateCommand())
+                {
+                    vacuumCommand.CommandText = "VACUUM;";
+                    vacuumCommand.ExecuteNonQuery();
+                }
+
+                lblTips.Text = $"删除完成：{tableName} 保留最新 {keepRows} 条，清理了 {affectedRows} 条旧记录，并执行了 VACUUM。";
+                MessageBox.Show(this, "删除成功，并已完成数据库整理。", "操作成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "删除失败：" + ex.Message, "操作失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private bool TryGetValidatedInputs(
+            out string dbPath,
+            out string tableName,
+            out string idColumn,
+            out string indexColumn,
+            out int keepRows)
+        {
+            dbPath = txtDbPath.Text.Trim();
+            tableName = txtTableName.Text.Trim();
+            idColumn = txtIdColumn.Text.Trim();
+            indexColumn = txtIndexColumn.Text.Trim();
+            keepRows = decimal.ToInt32(numKeepRows.Value);
+
+            if (string.IsNullOrWhiteSpace(dbPath))
+            {
+                MessageBox.Show(this, "请先选择数据库文件。", "参数缺失", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (!File.Exists(dbPath))
+            {
+                MessageBox.Show(this, "数据库文件不存在，请重新选择。", "路径错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (!IsSafeIdentifier(tableName) || !IsSafeIdentifier(idColumn) || !IsSafeIdentifier(indexColumn))
+            {
+                MessageBox.Show(this, "表名和列名只允许字母、数字和下划线。", "参数错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            if (keepRows <= 0)
+            {
+                MessageBox.Show(this, "保留行数必须大于 0。", "参数错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool IsSafeIdentifier(string value)
+        {
+            return !string.IsNullOrWhiteSpace(value) && value.All(ch => char.IsLetterOrDigit(ch) || ch == '_');
+        }
+
+        private static string QuoteIdentifier(string identifier)
+        {
+            return $"\"{identifier.Replace("\"", "\"\"")}\"";
+        }
+
+        private static SqliteConnection CreateConnection(string dbPath)
+        {
+            SqliteConnectionStringBuilder builder = new SqliteConnectionStringBuilder
+            {
+                DataSource = dbPath
+            };
+
+            return new SqliteConnection(builder.ToString());
         }
     }
 }

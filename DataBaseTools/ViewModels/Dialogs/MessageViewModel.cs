@@ -19,7 +19,7 @@ namespace DataBaseTools.ViewModels.Dialogs
 
         public string Title => "";
 
-        public event Action<IDialogResult> RequestClose;
+        public event Action<IDialogResult>? RequestClose;
 
         private MessageLanguage messageLanguage = new MessageLanguage();
         public MessageLanguage MessageLanguage
@@ -75,7 +75,7 @@ namespace DataBaseTools.ViewModels.Dialogs
         }
 
 
-        private string _content;
+        private string _content = string.Empty;
 
         public string Content
         {

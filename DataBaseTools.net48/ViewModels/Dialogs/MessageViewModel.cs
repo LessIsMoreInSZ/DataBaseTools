@@ -72,7 +72,7 @@ namespace DataBaseTools.net48.ViewModels.Dialogs
         }
 
 
-        private string _content;
+        private string _content = string.Empty;
 
         public string Content
         {

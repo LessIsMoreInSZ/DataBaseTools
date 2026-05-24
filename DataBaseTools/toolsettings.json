@@ -1,0 +1,14 @@
+{
+  "Server": "JYJ",
+  "DatabaseName": "VacuumSystem2",
+  "UserId": "sa",
+  "Password": "123456",
+  "TrustServerCertificate": true,
+  "BackupDirectory": "D:\\",
+  "DefaultBackupFileName": "VacuumSystem2_Backup",
+  "DefaultCleanupTable": "chart",
+  "DefaultKeepRows": 1000,
+  "DefaultIdColumn": "ID",
+  "DefaultIndexTable": "chart",
+  "DefaultIndexColumn": "creat_time"
+}

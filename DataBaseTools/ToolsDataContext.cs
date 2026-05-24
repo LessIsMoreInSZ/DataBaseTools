@@ -1,23 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using DataBaseTools.Configuration;
+using DataBaseTools.Infrastructure;
+using Microsoft.Data.SqlClient;
 
 namespace DataBaseTools
 {
-    public class ToolsDataContext: DbContext
+    public static class ToolsDataContext
     {
-        private string connectionString = @"Data Source=JYJ;Initial Catalog=VacuumSystem2;User ID=sa;Password=123456;MultipleActiveResultSets=true";
-        public ToolsDataContext() { }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        public static SqlConnection CreateConnection(SqlServerToolSettings settings, string databaseName)
         {
-            if (!string.IsNullOrWhiteSpace(connectionString))
-            {
-                optionsBuilder.UseSqlServer(connectionString);
-            }
+            return SqlServerConnectionFactory.Create(settings, databaseName);
         }
     }
 }
